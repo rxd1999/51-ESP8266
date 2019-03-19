@@ -15,7 +15,7 @@ sbit Light=P2^7;
 //主函数-----------------------------
 void main()
 {
-	unsigned char sendData[]="{\"M\":\"update\",\"ID\":\"xxxx\",\"V\":{\"xxxx\":\"05\"}}\r\n";
+	unsigned char sendData[]="{\"M\":\"update\",\"ID\":\"9747\",\"V\":{\"8529\":\"05\"}}\r\n";
 	int temp=0;
 	Serial();//串口设置初始化
 	 P0=0x00;
@@ -34,9 +34,10 @@ void main()
 				Outstr(sendData);
 				timeCnt=0;
 			}
-			if(timeoutCnt>10000){
-			Outstr("+++");
+			if(timeoutCnt>20000){
 			timeoutCnt=0;
+			Outstr("+++");
+
 			while(dat[0]!='C'); 
 			goto reConnect;
 			}
@@ -107,7 +108,7 @@ char checkin()
 			while(dat[0]!='>');
 			{
 				P0=0x0F;
-				Outstr("{\"M\":\"checkin\",\"ID\":\"xxxx\",\"K\":\"xxxxxxxxx\"}\r\n");
+				Outstr("{\"M\":\"checkin\",\"ID\":\"9747\",\"K\":\"9a4537fa7\"}\r\n");
 				delay_ms(3000);
 				if(dat[1]=='{')
 					return 0;
