@@ -25,21 +25,21 @@ void main()
 
 	while(1)
 	{
-			if(timeCnt>500)
-			{
-				temp=outTemp();
-				sendData[39]=(char)((temp/10)%10+48);
-				sendData[40]=(char)((temp%10)+48);
-				Outstr(sendData);
-				timeCnt=0;
-			}
-			if(timeoutCnt>16000)
-			{
+		if(timeCnt>500)
+		{
+			temp=outTemp();
+			sendData[39]=(char)((temp/10)%10+48);
+			sendData[40]=(char)((temp%10)+48);
+			Outstr(sendData);
+			timeCnt=0;
+		}
+		if(timeoutCnt>20000)
+		{
 			timeoutCnt=0;
 			Outstr("+++");
 			delay_ms(2000);
 			goto reConnect;
-			}
+		}
 
 	}
 	
@@ -79,6 +79,8 @@ void Outstr(char *str)
 }
 char isConnected()
 {
+	Outstr("+++");
+	delay_ms(2000);
 	Outstr("AT+RST\r\n");//重启ESP8266
 	delay_ms(8000);
 	if(dat[5]=='G')
@@ -132,9 +134,9 @@ void timer() interrupt 1
 {
 	++timeCnt;
 	++timeoutCnt;
-	if(timeoutCnt>20000)
+	if(timeoutCnt>40000)
 	{
-		timeoutCnt=16000;
+		timeoutCnt=20001;
 	}
 	TH0=0XC3;
 	TL0=0x50;
@@ -173,7 +175,8 @@ void Rec() interrupt 4
 			 }
 			dat[i]='\0';
 			i=0;
-			timeoutCnt=0;
+			 if(dat[0]!='E');
+				timeoutCnt=0;
 		}
 
 	}
