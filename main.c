@@ -16,13 +16,12 @@ sbit Light=P2^7;
 void main()
 {
 	unsigned char sendData[]="{\"M\":\"update\",\"ID\":\"9747\",\"V\":{\"8529\":\"05\"}}\r\n";
-	int temp=0;
+	int temp=0; 
 	Serial();//串口设置初始化
-	 P0=0x00;
+	reConnect: P0=0x00;
 	while(isConnected());
-	reConnect:P0=0x01;
 	while(checkin());
-	P0=0Xff;
+	P0=0X7F;//LOGIN SUCCESS NUM:8
 
 	while(1)
 	{
@@ -34,11 +33,11 @@ void main()
 				Outstr(sendData);
 				timeCnt=0;
 			}
-			if(timeoutCnt>20000){
+			if(timeoutCnt>16000)
+			{
 			timeoutCnt=0;
 			Outstr("+++");
-
-			while(dat[0]!='C'); 
+			delay_ms(2000);
 			goto reConnect;
 			}
 
@@ -80,51 +79,63 @@ void Outstr(char *str)
 }
 char isConnected()
 {
-	if(dat[0]=='W'&&dat[5]=='G')
+	Outstr("AT+RST\r\n");//重启ESP8266
+	delay_ms(8000);
+	if(dat[5]=='G')
 	{
-		P0=0x01;
+		P0=0x3F;//STEP 0
 		return 0;
 	}
 	else
 	{
-		P0=!P0;
-		delay_ms(1000);
 		return 1;
 	}
 }
 char checkin()
 {
 	Outstr("AT+CIPSTART=\"TCP\",\"www.bigiot.net\",8181\r\n");//连接贝壳物联服务器
-	delay_ms(2000);
+	delay_ms(3000);
 	if(dat[0]=='+'||dat[0]=='{')
 	{
-		P0=0x03;
+		P0=0x06;//STEP 1
 		Outstr("AT+CIPMODE=1\r\n");
-		delay_ms(3000);
+		delay_ms(1000);
 		{
-			P0=0X07;
 			Outstr("AT+CIPSEND\r\n");
-			//delay_ms(2000);
-			while(dat[0]!='>');
+			delay_ms(2000);
+			if(dat[0]=='>')
 			{
-				P0=0x0F;
+				P0=0x5B;//STEP 2
 				Outstr("{\"M\":\"checkin\",\"ID\":\"9747\",\"K\":\"9a4537fa7\"}\r\n");
-				delay_ms(3000);
+				delay_ms(5000);
 				if(dat[1]=='{')
-					return 0;
-				else{
-					return 1;
-				}					
+					{
+						P0=0X4F;//STEP 3
+						return 0;
+					}
+					else
+					{
+						P0=0x79;//ERROR
+						Outstr("+++");
+						delay_ms(5000);
+						return 1;
+					}					
 			}
+			return 1;
 		}
 	}
 	return 1;
+}
+	
 		
-} 
 void timer() interrupt 1
 {
 	++timeCnt;
 	++timeoutCnt;
+	if(timeoutCnt>20000)
+	{
+		timeoutCnt=16000;
+	}
 	TH0=0XC3;
 	TL0=0x50;
 }
@@ -135,7 +146,6 @@ void Rec() interrupt 4
 	if(RI)
 	{
 		RI=0;
-		timeoutCnt=0;
 		temp=SBUF;
 		if(temp!='\n')
 		{
@@ -163,6 +173,7 @@ void Rec() interrupt 4
 			 }
 			dat[i]='\0';
 			i=0;
+			timeoutCnt=0;
 		}
 
 	}
